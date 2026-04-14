@@ -1,0 +1,207 @@
+/*
+ * ECE 153B
+ *
+ * Name(s):
+ * Section:
+ * Lab: 2A
+ */
+
+#include "stm32l476xx.h"
+
+void GPIO_Init(void){	
+	// [TODO]
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; //ENABLE GPIO PORT A
+	
+	GPIOA->MODER &= ~(GPIO_MODER_MODE5); //CLEAR 2 MODE BITS AND ASSIGN PA5 TO OUTPUT MODE 01
+	GPIOA->MODER |= GPIO_MODER_MODE5_0;
+	
+	GPIOA->OTYPER &= ~(GPIO_OTYPER_OT5); // SET OUTPUT TYPE TO PUSH PULL DRIVES HIGH AND LOW
+	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD5); // NO PULL UP NO PULL DOWN
+	
+	GPIOA->MODER &= ~(GPIO_MODER_MODE6);
+	GPIOA->MODER |= GPIO_MODER_MODE6_0;
+	GPIOA->OTYPER &= ~(GPIO_OTYPER_OT6);
+	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD6);
+	
+	GPIOA->MODER &= ~(GPIO_MODER_MODE8);
+	GPIOA->MODER |= GPIO_MODER_MODE8_0;
+	GPIOA->OTYPER &= ~(GPIO_OTYPER_OT8);
+	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD8);
+	
+	GPIOA->MODER &= ~(GPIO_MODER_MODE9);
+	GPIOA->MODER |= GPIO_MODER_MODE9_0;
+	GPIOA->OTYPER &= ~(GPIO_OTYPER_OT9);
+	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD9); //REPEAT PA6,8,9
+	
+}
+
+#define DELAY 1000	// delay between steps of the sequences
+
+void Full_Stepping_Clockwise(void){ //FULL STEPPING CW 4 PATTERNS 512 CYCLES * 4 PATTERNS = 2048 STEPS
+	// [TODO]
+	for(int i = 0; i < 512; i++){
+		
+		//PA5 and PA6 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD5 | GPIO_ODR_OD6);
+		for(int i = 0; i < DELAY; i++){}
+		
+		//PA6 and PA8 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD6 | GPIO_ODR_OD8);
+		for(int i = 0; i < DELAY; i++){}
+		
+		//PA8 and PA9 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		for(int i = 0; i < DELAY; i++){}
+		
+		//PA5 and PA9 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9); //RESET EVERY TIME THEN INIT
+		GPIOA->ODR |= (GPIO_ODR_OD5 | GPIO_ODR_OD9);
+		for(int i = 0; i < DELAY; i++){}
+	}
+	
+	// Turn everything off after the rotation is done
+	GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+}
+
+void Full_Stepping_CounterClockwise(void){ //SAME BUT FLIPPED
+	// [TODO]
+	for(int i = 0; i < 512; i++){
+
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD5 | GPIO_ODR_OD9);
+		for(int i = 0; i < DELAY; i++){}
+		
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		for(int i = 0; i < DELAY; i++){}
+		
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD6 | GPIO_ODR_OD8);
+		for(int i = 0; i < DELAY; i++){}
+			
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD5 | GPIO_ODR_OD6);
+		for(int i = 0; i < DELAY; i++){}
+	}
+	
+	GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+}
+
+void Half_Stepping_Clockwise(void){ //4096 STEPS, PA5 THEN PA5,6 THEN PA6 THEN PA68 THEN PA8 THEN PA89 THEN PA9 THEN PA95
+	// [TODO]	
+	for(int i = 0; i < 512; i++){
+		
+		// Step 1: only PA5 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD5;
+		for(int i = 0; i < DELAY; i++){}
+		// Step 2: PA5 and PA6 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD5 | GPIO_ODR_OD6);
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 3: only PA6 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD6;
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 4: PA6 and PA8 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD6 | GPIO_ODR_OD8);
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 5: only PA8 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD8;
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 6: PA8 and PA9 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 7: only PA9 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD9;
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 8: PA9 and PA5 ON
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD9 | GPIO_ODR_OD5);
+		for(int i = 0; i < DELAY; i++){}
+	}
+	
+	GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+}
+
+void Half_Stepping_CounterClockwise(void){ //FLIPPED
+	// [TODO]
+	for(int i = 0; i < 512; i++){
+		
+		// Step 1
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD9 | GPIO_ODR_OD5);
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 2
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD9;
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 3
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 4
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD8;
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 5
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD6 | GPIO_ODR_OD8);
+		for(int i = 0; i < DELAY; i++){}
+		
+		// Step 6
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD6;
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 7
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= (GPIO_ODR_OD5 | GPIO_ODR_OD6);
+		for(int i = 0; i < DELAY; i++){}
+			
+		// Step 8
+		GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+		GPIOA->ODR |= GPIO_ODR_OD5;
+		for(int i = 0; i < DELAY; i++){}
+	}
+	
+	GPIOA->ODR &= ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);
+	
+}
+
+
+int main(void){
+	GPIO_Init();
+	// Initialize GPIO PINS FOR MOTOR
+	
+	while(1){
+		
+		Full_Stepping_Clockwise();
+		
+		Full_Stepping_CounterClockwise();
+		
+		Half_Stepping_Clockwise();
+		
+		Half_Stepping_CounterClockwise();
+	}
+
+	// Rotate 360 degrees either clockwise or counter-clockwise
+	// [TODO]
+}
