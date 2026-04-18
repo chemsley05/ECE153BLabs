@@ -205,3 +205,107 @@ int main(void){
 	// Rotate 360 degrees either clockwise or counter-clockwise
 	// [TODO]
 }
+/*
+
+ECE 153B
+Name(s):
+Section:
+Lab: 2B
+*/
+#include "EXTI.h"
+#include "LED.h"
+
+void EXTI_Init(void) {
+// Initialize User Button PC13
+// Enable GPIOC clock for user button
+RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+
+// Set PC13 as input mode
+GPIOC->MODER &= ~(GPIO_MODER_MODE13);
+
+// No pull-up no pull-down
+GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD13);
+
+// Configure SYSCFG EXTI
+
+// Enable SYSCFG clock
+RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
+// Map EXTI13 to C
+// EXTI13 is in EXTICR[3], bits [7:4]
+SYSCFG->EXTICR[3] &= ~(SYSCFG_EXTICR4_EXTI13);
+SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI13_PC;
+
+// Configure EXTI Trigger
+
+// Disable rising edge trigger for line 13
+EXTI->RTSR1 &= ~(EXTI_RTSR1_RT13);
+
+// Enable falling edge trigger for line 13
+EXTI->FTSR1 |= EXTI_FTSR1_FT13;
+
+
+// Enable EXTI
+
+// Unmask interrupt for EXTI13
+EXTI->IMR1 |= EXTI_IMR1_IM13;
+
+
+// Configure and Enable in NVIC
+
+
+NVIC_EnableIRQ(EXTI15_10_IRQn);
+NVIC_SetPriority(EXTI15_10_IRQn, 0);
+}
+
+// Interrupt handler for EXTI lines 10 through 15
+void EXTI15_10_IRQHandler(void) {
+// EXTI13 caused the interrupt
+if ((EXTI->PR1 & EXTI_PR1_PIF13) == EXTI_PR1_PIF13) {
+
+	// Clear interrupt pending bit by  1
+	EXTI->PR1 |= EXTI_PR1_PIF13;
+	
+	// Toggle green LED
+	Green_LED_Toggle();
+}
+}
+
+/*
+
+ECE 153B
+Name(s): Gavin Kesler, Chris Hemsley
+Section:
+Lab: 2B
+*/
+#include "LED.h"
+
+void LED_Init(void) {
+// Enable GPIOA clock because green LED is on PA5
+RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+
+// Set PA5 to output mode
+GPIOA->MODER &= ~(GPIO_MODER_MODE5);
+GPIOA->MODER |= GPIO_MODER_MODE5_0;
+
+// Set PA5 to push-pull
+GPIOA->OTYPER &= ~(1U << 5);
+
+// No pull-up, no pull-down
+GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD5);
+
+// Start with LED off
+Green_LED_Off();
+}
+
+void Green_LED_Off(void) {
+GPIOA->ODR &= ~(GPIO_ODR_OD5);
+}
+
+void Green_LED_On(void) {
+GPIOA->ODR |= GPIO_ODR_OD5;
+}
+
+void Green_LED_Toggle(void) {
+GPIOA->ODR ^= GPIO_ODR_OD5;
+}
